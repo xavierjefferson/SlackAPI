@@ -10,6 +10,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Net;
+using SlackAPI.Attributes;
+using SlackAPI.Models;
+using SlackAPI.Models.RPCMessages;
 
 namespace SlackAPI
 {
@@ -53,7 +56,7 @@ namespace SlackAPI
 
                 foreach (Type type in assemblyTypes)
                 {
-                    foreach (SlackSocketRouting route in type.GetTypeInfo().GetCustomAttributes<SlackSocketRouting>())
+                    foreach (SlackSocketRoutingAttribute route in type.GetTypeInfo().GetCustomAttributes<SlackSocketRoutingAttribute>())
                     {
                         if (!routing.ContainsKey(route.Type))
                         {
@@ -111,7 +114,7 @@ namespace SlackAPI
                 if (parameters[0].ParameterType.GetTypeInfo().IsSubclassOf(slackMessage))
                 {
                     Type t = parameters[0].ParameterType;
-                    foreach (SlackSocketRouting route in t.GetTypeInfo().GetCustomAttributes<SlackSocketRouting>())
+                    foreach (SlackSocketRoutingAttribute route in t.GetTypeInfo().GetCustomAttributes<SlackSocketRoutingAttribute>())
                     {
                         Type genericAction = typeof(Action<>).MakeGenericType(parameters[0].ParameterType);
                         Delegate d = m.CreateDelegate(genericAction, routingTo);
@@ -151,10 +154,10 @@ namespace SlackAPI
             //socket.Send(JsonConvert.SerializeObject(message));
 
 			if (string.IsNullOrEmpty(message.type)){
-                IEnumerable<SlackSocketRouting> routes = message.GetType().GetTypeInfo().GetCustomAttributes<SlackSocketRouting>();
+                IEnumerable<SlackSocketRoutingAttribute> routes = message.GetType().GetTypeInfo().GetCustomAttributes<SlackSocketRoutingAttribute>();
 
-                SlackSocketRouting route = null;
-                foreach (SlackSocketRouting r in routes)
+                SlackSocketRoutingAttribute route = null;
+                foreach (SlackSocketRoutingAttribute r in routes)
                 {
                     route = r;
                 }
@@ -175,7 +178,7 @@ namespace SlackAPI
         {
             Type t = typeof(K);
 
-            foreach (SlackSocketRouting route in t.GetTypeInfo().GetCustomAttributes<SlackSocketRouting>())
+            foreach (SlackSocketRoutingAttribute route in t.GetTypeInfo().GetCustomAttributes<SlackSocketRoutingAttribute>())
             {
                 if (!routes.ContainsKey(route.Type))
                     routes.Add(route.Type, new Dictionary<string, Delegate>());
@@ -189,7 +192,7 @@ namespace SlackAPI
         public void UnbindCallback<K>(Action<K> callback)
         {
             Type t = typeof(K);
-            foreach (SlackSocketRouting route in t.GetTypeInfo().GetCustomAttributes<SlackSocketRouting>())
+            foreach (SlackSocketRoutingAttribute route in t.GetTypeInfo().GetCustomAttributes<SlackSocketRoutingAttribute>())
             {
                 Delegate d = routes.ContainsKey(route.Type) ? (routes.ContainsKey(route.SubType ?? "null") ? routes[route.Type][route.SubType ?? "null"] : null) : null;
                 if (d != null)
@@ -332,33 +335,5 @@ namespace SlackAPI
 		    if (Interlocked.CompareExchange(ref closedEmitted, 1, 0) == 0 && ConnectionClosed != null)
                 ConnectionClosed();
 		}
-    }
-
-    public class SlackSocketMessage
-    {
-        public int id;
-        public int reply_to;
-        public string type;
-        public string subtype;
-        public bool ok = true;
-        public Error error;
-    }
-
-    public class Error
-    {
-        public int code;
-        public string msg;
-    }
-
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public class SlackSocketRouting : Attribute
-    {
-        public string Type;
-        public string SubType;
-        public SlackSocketRouting(string type, string subtype = null)
-        {
-            this.Type = type;
-            this.SubType = subtype;
-        }
     }
 }

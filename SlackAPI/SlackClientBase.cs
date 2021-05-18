@@ -2,18 +2,21 @@
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.StaticFiles;
 using Newtonsoft.Json;
+using RestSharp;
+using SlackAPI.Attributes;
+using SlackAPI.Models;
 
 namespace SlackAPI
 {
     public abstract class SlackClientBase
     {
+        protected readonly string APIToken;
         protected readonly IWebProxy proxySettings;
-        private readonly HttpClient httpClient;
-        public string APIBaseLocation { get; set; } = "https://slack.com/api/";
+
+        protected RestClient RestClient;
 
         static SlackClientBase()
         {
@@ -21,16 +24,19 @@ namespace SlackAPI
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         }
 
-        protected SlackClientBase()
+        protected SlackClientBase(string token) : this(token, null)
         {
-            this.httpClient = new HttpClient();
         }
 
-        protected SlackClientBase(IWebProxy proxySettings)
+        protected SlackClientBase(string token, IWebProxy proxySettings)
         {
-            this.proxySettings = proxySettings;
-            this.httpClient = new HttpClient(new HttpClientHandler { UseProxy = true, Proxy = proxySettings });
+            RestClient = new RestClient {Proxy = proxySettings};
+            APIToken = token;
         }
+
+        public string OAuthBaseLocation { get; set; } = "https://slack.com/oauth/v2/";
+
+        public string APIBaseLocation { get; set; } = "https://slack.com/api/";
 
         protected Uri GetSlackUri(string path, Tuple<string, string>[] getParameters)
         {
@@ -39,26 +45,25 @@ namespace SlackAPI
             if (getParameters != null && getParameters.Length > 0)
             {
                 parameters = getParameters
-                .Where(x => x.Item2 != null)
-                .Select(new Func<Tuple<string, string>, string>(a =>
-                {
-                    try
+                    .Where(x => x.Item2 != null)
+                    .Select(a =>
                     {
-                        return string.Format("{0}={1}", Uri.EscapeDataString(a.Item1), Uri.EscapeDataString(a.Item2));
-                    }
-                    catch (Exception ex)
+                        try
+                        {
+                            return string.Format("{0}={1}", Uri.EscapeDataString(a.Item1),
+                                Uri.EscapeDataString(a.Item2));
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidOperationException(string.Format("Failed when processing '{0}'.", a), ex);
+                        }
+                    })
+                    .Aggregate((a, b) =>
                     {
-                        throw new InvalidOperationException(string.Format("Failed when processing '{0}'.", a), ex);
-                    }
-                }))
-                .Aggregate((a, b) =>
-                {
-                    if (string.IsNullOrEmpty(a))
-                        return b;
-                    else
+                        if (string.IsNullOrEmpty(a))
+                            return b;
                         return string.Format("{0}&{1}", a, b);
-                });
-
+                    });
             }
 
             Uri requestUri = default;
@@ -71,46 +76,61 @@ namespace SlackAPI
             return requestUri;
         }
 
-        protected void APIRequest<K>(Action<K> callback, Tuple<string, string>[] getParameters, Tuple<string, string>[] postParameters, string token = "")
-            where K : Response
+        private RestRequest GetRestRequest<K>(Tuple<string, string>[] getParameters,
+            Tuple<string, string>[] postParameters, string token = "")
         {
-            RequestPath path = RequestPath.GetRequestPath<K>();
-            //TODO: Custom paths? Appropriate subdomain paths? Not sure.
-            //Maybe store custom path in the requestpath.path itself?
+            var path = RequestPathAttribute.GetRequestPath<K>();
 
-            Uri requestUri = GetSlackUri(Path.Combine(APIBaseLocation, path.Path), getParameters);
-            HttpWebRequest request = CreateWebRequest(requestUri);
+            var requestUri = GetSlackUri(Path.Combine(APIBaseLocation, path.Path), getParameters);
+            var restRequest = new RestRequest(requestUri) {RequestFormat = DataFormat.None};
 
-            if (!string.IsNullOrEmpty(token))
-                request.Headers.Add("Authorization", "Bearer " + token);
+            AppendTokenHeader(token, restRequest);
 
-            //This will handle all of the processing.
-            RequestState<K> state = new RequestState<K>(request, postParameters, callback);
-            state.Begin();
+            restRequest.Method = postParameters.Any() ? Method.POST : Method.GET;
+            if (postParameters.Any())
+            {
+                restRequest.AddHeader("content-type", "application/x-www-form-urlencoded");
+            }
+
+            foreach (var tuple in postParameters)
+            {
+                restRequest.AddOrUpdateParameter(tuple.Item1, tuple.Item2);
+            }
+
+            return restRequest;
         }
 
-        public Task<K> APIRequestAsync<K>(Tuple<string, string>[] getParameters, Tuple<string, string>[] postParameters, string token = "")
+        private static void AppendTokenHeader(string token, RestRequest restRequest)
+        {
+            if (!string.IsNullOrEmpty(token))
+            {
+                restRequest.AddHeader("Authorization", "Bearer " + token);
+            }
+        }
+
+        protected void APIRequest<K>(Action<K> callback, Tuple<string, string>[] getParameters,
+            Tuple<string, string>[] postParameters, string token = "")
             where K : Response
         {
-            RequestPath path = RequestPath.GetRequestPath<K>();
-            //TODO: Custom paths? Appropriate subdomain paths? Not sure.
-            //Maybe store custom path in the requestpath.path itself?
+            var restRequest = GetRestRequest<K>(getParameters, postParameters, token);
+            var restResponse = RestClient.Execute<K>(restRequest);
+            callback(restResponse.Data);
+        }
 
-            Uri requestUri = GetSlackUri(Path.Combine(APIBaseLocation, path.Path), getParameters);
-            HttpWebRequest request = CreateWebRequest(requestUri);
-
-            if (!string.IsNullOrEmpty(token))
-                request.Headers.Add("Authorization", "Bearer " + token);
-
-            //This will handle all of the processing.
-            var state = new RequestStateForTask<K>(request, postParameters);
-            return state.Execute();
+        public async Task<K> APIRequestAsync<K>(Tuple<string, string>[] getParameters,
+            Tuple<string, string>[] postParameters,
+            string token = "")
+            where K : Response
+        {
+            var restRequest = GetRestRequest<K>(getParameters, postParameters, token);
+            var restResponse = await RestClient.ExecuteAsync<K>(restRequest);
+            return restResponse.Data;
         }
 
         protected void APIGetRequest<K>(Action<K> callback, params Tuple<string, string>[] getParameters)
             where K : Response
         {
-            APIRequest<K>(callback, getParameters, new Tuple<string, string>[0]);
+            APIRequest(callback, getParameters, new Tuple<string, string>[0]);
         }
 
         public Task<K> APIGetRequestAsync<K>(params Tuple<string, string>[] getParameters)
@@ -119,30 +139,6 @@ namespace SlackAPI
             return APIRequestAsync<K>(getParameters, new Tuple<string, string>[0]);
         }
 
-        protected HttpWebRequest CreateWebRequest(Uri requestUri)
-        {
-            var httpWebRequest = (HttpWebRequest)HttpWebRequest.Create(requestUri);
-            if (proxySettings != null)
-            {
-                httpWebRequest.Proxy = this.proxySettings;
-            }
-
-            return httpWebRequest;
-        }
-
-        protected Task<HttpResponseMessage> PostRequestAsync(string requestUri, MultipartFormDataContent form, string token)
-        {
-            var requestMessage = new HttpRequestMessage
-            {
-                Method = HttpMethod.Post,
-                Content = form,
-                RequestUri = new Uri(requestUri),
-            };
-
-            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            return httpClient.SendAsync(requestMessage);
-        }
 
         public void RegisterConverter(JsonConverter converter)
         {
@@ -152,6 +148,50 @@ namespace SlackAPI
             }
 
             Extensions.Converters.Add(converter);
+        }
+
+        protected RestRequest CreateUploadRestRequest(byte[] fileData, string fileName, string[] channelIds,
+            string title = null, string initialComment = null, string contentType = null)
+        {
+            var target = new Uri(Path.Combine(APIBaseLocation,  "files.upload"));
+            var restRequest = new RestRequest(target, Method.POST);
+
+
+            //File/Content
+            if (!string.IsNullOrEmpty(contentType))
+            {
+                restRequest.AddOrUpdateParameter("filetype", contentType);
+            }
+
+            if (!string.IsNullOrEmpty(fileName))
+            {
+                restRequest.AddOrUpdateParameter("filename", fileName);
+            }
+
+            if (!string.IsNullOrEmpty(title))
+            {
+                restRequest.AddOrUpdateParameter("title", title);
+            }
+
+
+            if (!string.IsNullOrEmpty(initialComment))
+            {
+                restRequest.AddOrUpdateParameter("initial_comment", initialComment);
+            }
+
+            AppendTokenHeader(APIToken, restRequest);
+
+            restRequest.AddOrUpdateParameter("channels", string.Join(",", channelIds));
+            var provider = new FileExtensionContentTypeProvider();
+        
+            if (string.IsNullOrWhiteSpace(contentType) && !provider.TryGetContentType(fileName, out contentType))
+            {
+                contentType = "application/octet-stream";
+            }
+
+            restRequest.AddFileBytes("file", fileData, fileName, contentType);
+            restRequest.AlwaysMultipartFormData = true;
+            return restRequest;
         }
     }
 }

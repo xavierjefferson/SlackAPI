@@ -5,8 +5,9 @@ using System.Net;
 using System.Reflection;
 using Newtonsoft.Json;
 using Polly;
+using SlackAPI.Models.RPCMessages;
+using SlackAPI.Models.WebSocketMessages;
 using SlackAPI.Tests.Helpers;
-using SlackAPI.WebSocketMessages;
 using Xunit;
 
 namespace SlackAPI.Tests.Configuration

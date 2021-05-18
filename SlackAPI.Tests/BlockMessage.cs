@@ -1,4 +1,6 @@
-﻿using SlackAPI.Tests.Configuration;
+﻿using SlackAPI.Models;
+using SlackAPI.Models.RPCMessages;
+using SlackAPI.Tests.Configuration;
 using SlackAPI.Tests.Helpers;
 using Xunit;
 

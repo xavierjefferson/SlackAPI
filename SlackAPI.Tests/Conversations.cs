@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using SlackAPI.RPCMessages;
+using SlackAPI.Models.RPCMessages;
 using SlackAPI.Tests.Configuration;
 using SlackAPI.Tests.Helpers;
 using Xunit;

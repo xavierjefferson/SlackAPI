@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -8,105 +7,114 @@ namespace SlackAPI.Utilities
     public class LockFreeQueue<T> : ILockFree<T>
         where T : class
     {
-        private SingleLinkNode mHead;
-        private SingleLinkNode mTail;
-        public int Count;
-        public T Latest
-        {
-            get
-            {
-                return mHead.Next == null ? default(T) : mTail.Item;
-            }
-        }
+        private int _count;
+        private SingleLinkNode _head;
+        private SingleLinkNode _tail;
 
         public LockFreeQueue()
         {
-            mHead = new SingleLinkNode();
-            mTail = mHead;
+            _head = new SingleLinkNode();
+            _tail = _head;
         }
 
-        private static bool CompareAndExchange(ref SingleLinkNode pLocation, SingleLinkNode pComparand, SingleLinkNode pNewValue)
+        public T Latest => _head.Next == null ? default : _tail.Item;
+
+        public T Next => _head.Next == null ? default : _head.Next.Item;
+
+        public int Count => _count;
+
+        private static bool CompareAndExchange(ref SingleLinkNode pLocation, SingleLinkNode pComparand,
+            SingleLinkNode pNewValue)
         {
             return
                 pComparand ==
                 Interlocked.CompareExchange(ref pLocation, pNewValue, pComparand);
         }
 
-        public T Next { get { return mHead.Next == null ? default(T) : mHead.Next.Item; } }
         public void Unshift(T pItem)
         {
             SingleLinkNode oldHead = null;
 
-            SingleLinkNode newNode = new SingleLinkNode();
+            var newNode = new SingleLinkNode();
             newNode.Item = pItem;
 
-            bool newNodeWasAdded = false;
+            var newNodeWasAdded = false;
             while (!newNodeWasAdded)
             {
-                oldHead = mHead.Next;
+                oldHead = _head.Next;
                 newNode.Next = oldHead;
 
-                if (mHead.Next == oldHead)
-                    newNodeWasAdded = CompareAndExchange(ref mHead.Next, oldHead, newNode);
+                if (_head.Next == oldHead)
+                {
+                    var tmp = _head.Next;
+                    newNodeWasAdded = CompareAndExchange(ref tmp, oldHead, newNode);
+                    _head.Next = tmp;
+                }
             }
 
-            CompareAndExchange(ref mHead, oldHead, newNode);
+            CompareAndExchange(ref _head, oldHead, newNode);
         }
+
         public override void Push(T pItem)
         {
             SingleLinkNode oldTail = null;
             SingleLinkNode oldTailNext;
 
-            SingleLinkNode newNode = new SingleLinkNode();
+            var newNode = new SingleLinkNode();
             newNode.Item = pItem;
 
-            bool newNodeWasAdded = false;
+            var newNodeWasAdded = false;
             while (!newNodeWasAdded)
             {
-                oldTail = mTail;
+                oldTail = _tail;
                 oldTailNext = oldTail.Next;
 
-                if (mTail == oldTail)
+                if (_tail == oldTail)
                     if (oldTailNext == null)
-                        newNodeWasAdded = CompareAndExchange(ref mTail.Next, null, newNode);
+                    {
+                        var tmp = _tail.Next;
+                        newNodeWasAdded = CompareAndExchange(ref tmp, null, newNode);
+                        _tail.Next = tmp;
+                    }
                     else
-                        CompareAndExchange(ref mTail, oldTail, oldTailNext);
+                        CompareAndExchange(ref _tail, oldTail, oldTailNext);
             }
 
-            CompareAndExchange(ref mTail, oldTail, newNode);
-            Interlocked.Increment(ref Count);
+            CompareAndExchange(ref _tail, oldTail, newNode);
+            Interlocked.Increment(ref _count);
         }
 
         public override bool Pop(out T pItem)
         {
-            pItem = default(T);
+            pItem = default;
             SingleLinkNode oldHead = null;
 
-            bool haveAdvancedHead = false;
+            var haveAdvancedHead = false;
             while (!haveAdvancedHead)
             {
-                oldHead = mHead;
-                SingleLinkNode oldTail = mTail;
-                SingleLinkNode oldHeadNext = oldHead.Next;
+                oldHead = _head;
+                var oldTail = _tail;
+                var oldHeadNext = oldHead.Next;
 
-                if (oldHead == mHead)
+                if (oldHead == _head)
                 {
                     if (oldHead == oldTail)
                     {
                         if (oldHeadNext == null)
                             return false;
-                        CompareAndExchange(ref mTail, oldTail, oldHeadNext);
+                        CompareAndExchange(ref _tail, oldTail, oldHeadNext);
                     }
 
                     else
                     {
                         pItem = oldHeadNext.Item;
                         haveAdvancedHead =
-                          CompareAndExchange(ref mHead, oldHead, oldHeadNext);
+                            CompareAndExchange(ref _head, oldHead, oldHeadNext);
                     }
                 }
             }
-            Interlocked.Decrement(ref Count);
+
+            Interlocked.Decrement(ref _count);
             return true;
         }
 
@@ -119,25 +127,26 @@ namespace SlackAPI.Utilities
 
         public bool Shift(out T pItem)
         {
-            pItem = default(T);
-            if (mHead == null)
+            pItem = default;
+            if (_head == null)
                 return false;
             SingleLinkNode oldHead = null;
 
-            bool haveAdvancedHead = false;
+            var haveAdvancedHead = false;
             while (!haveAdvancedHead)
             {
-                oldHead = mHead;
+                oldHead = _head;
                 if (oldHead != null)
                 {
-                    SingleLinkNode oldHeadNext = oldHead.Next;
-                    if (CompareAndExchange(ref mHead, oldHead, oldHeadNext))
+                    var oldHeadNext = oldHead.Next;
+                    if (CompareAndExchange(ref _head, oldHead, oldHeadNext))
                     {
                         pItem = oldHead.Item;
                         return true;
                     }
                 }
             }
+
             return false;
         }
 
@@ -150,7 +159,7 @@ namespace SlackAPI.Utilities
 
         public override string ToString()
         {
-            return String.Format("Item count: {0}", Count);
+            return string.Format("Item count: {0}", _count);
         }
 
         public IEnumerator<T> GetEnumerator()
@@ -159,40 +168,30 @@ namespace SlackAPI.Utilities
         }
 
         /// <summary>
-        /// Does *not* provide any kind of stateful guarantee.  Should only be used in cases where we know that the queue is not volatile.
+        ///     Does *not* provide any kind of stateful guarantee.  Should only be used in cases where we know that the queue is
+        ///     not volatile.
         /// </summary>
         internal class LockFreeEnumerator : IEnumerator<T>
         {
-            LockFreeQueue<T> parent;
-            SingleLinkNode currentNode;
-
-            T IEnumerator<T>.Current
-            {
-                get
-                {
-                    return currentNode.Item;
-                }
-            }
-            object IEnumerator.Current
-            {
-                get
-                {
-                    return currentNode.Item;
-                }
-            }
-
-            public bool MoveNext()
-            {
-                if (currentNode == null)
-                    currentNode = parent.mHead.Next;
-                else
-                    currentNode = currentNode.Next;
-                return currentNode != null;
-            }
+            private SingleLinkNode currentNode;
+            private LockFreeQueue<T> parent;
 
             public LockFreeEnumerator(LockFreeQueue<T> list)
             {
                 parent = list;
+            }
+
+            T IEnumerator<T>.Current => currentNode.Item;
+
+            object IEnumerator.Current => currentNode.Item;
+
+            public bool MoveNext()
+            {
+                if (currentNode == null)
+                    currentNode = parent._head.Next;
+                else
+                    currentNode = currentNode.Next;
+                return currentNode != null;
             }
 
             public void Dispose()
@@ -203,7 +202,7 @@ namespace SlackAPI.Utilities
 
             public void Reset()
             {
-                currentNode = parent.mHead.Next;
+                currentNode = parent._head.Next;
             }
         }
     }

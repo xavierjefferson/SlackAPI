@@ -2,7 +2,9 @@
 using System;
 using System.Linq;
 using System.Net;
-using SlackAPI.WebSocketMessages;
+using SlackAPI.Models;
+using SlackAPI.Models.RPCMessages;
+using SlackAPI.Models.WebSocketMessages;
 
 namespace SlackAPI
 {

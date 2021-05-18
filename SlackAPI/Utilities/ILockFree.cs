@@ -6,8 +6,8 @@ namespace SlackAPI.Utilities
     {
         internal class SingleLinkNode
         {
-            public SingleLinkNode Next;
-            public T Item;
+             public SingleLinkNode Next {get;set;}
+             public T Item {get;set;}
         }
 
         public abstract void Push(T pItem);

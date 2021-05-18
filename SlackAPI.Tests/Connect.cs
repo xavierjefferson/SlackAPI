@@ -2,9 +2,10 @@
 using System.Linq;
 using System.Net;
 using System.Threading;
+using SlackAPI.Models.RPCMessages;
+using SlackAPI.Models.WebSocketMessages;
 using SlackAPI.Tests.Configuration;
 using SlackAPI.Tests.Helpers;
-using SlackAPI.WebSocketMessages;
 using Xunit;
 
 namespace SlackAPI.Tests

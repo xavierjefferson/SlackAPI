@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using SlackAPI.Models.RPCMessages;
 using SlackAPI.Tests.Configuration;
 using SlackAPI.Tests.Helpers;
 using Xunit;

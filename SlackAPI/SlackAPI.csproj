@@ -8,7 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="microsoft.aspnetcore.staticfiles" Version="2.2.0" />
     <PackageReference Include="newtonsoft.json" Version="9.0.1" />
+    <PackageReference Include="restsharp" Version="106.11.7" />
   </ItemGroup>
 <ItemGroup>
     <Compile Include="..\GlobalAssemblyInfo.cs">
