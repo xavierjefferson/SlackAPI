@@ -1,4 +1,6 @@
-﻿namespace SlackAPI.Models
+﻿using System.Collections.Generic;
+
+namespace SlackAPI.Models
 {
     public class Channel : Conversation
     {
@@ -11,7 +13,7 @@
         public bool is_im { get; set; }
         public bool is_member { get; set; }
 
-        public string[] members { get; set; }
+        public List<string> members {get; set;} = new List<string>();
         public string name { get; set; }
 
         public int num_members { get; set; }

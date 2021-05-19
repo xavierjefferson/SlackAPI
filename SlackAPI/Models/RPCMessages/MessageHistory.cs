@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using SlackAPI.Attributes;
 
 namespace SlackAPI.Models.RPCMessages
@@ -11,7 +12,7 @@ namespace SlackAPI.Models.RPCMessages
         /// </summary>
         public DateTime latest { get; set; }
 
-        public Message[] messages { get; set; }
+        public List<Message> messages {get; set;} = new List<Message>();
         public bool has_more { get; set; }
         public int unread_count_display { get; set; }
 

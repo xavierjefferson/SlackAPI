@@ -1,4 +1,6 @@
-﻿namespace SlackAPI.Models.RPCMessages
+﻿using System.Collections.Generic;
+
+namespace SlackAPI.Models.RPCMessages
 {
     public class SearchResponseMessagesContainer
     {
@@ -9,6 +11,6 @@
         public int total { get; set; }
 
         public PaginationInformation paging { get; set; }
-        public ContextMessage[] matches { get; set; }
+        public List<ContextMessage> matches {get; set;} = new List<ContextMessage>();
     }
 }

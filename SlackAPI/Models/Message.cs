@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace SlackAPI.Models
 {
@@ -17,7 +18,7 @@ namespace SlackAPI.Models
         public bool is_starred { get; set; }
         public string permalink { get; set; }
 
-        public Reaction[] reactions { get; set; }
+        public List<Reaction> reactions {get; set;} = new List<Reaction>();
         //Wibblr? Not really sure what this applies to.  :<
 
         public DateTime? thread_ts { get; set; }

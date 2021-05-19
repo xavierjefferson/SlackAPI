@@ -1,12 +1,13 @@
-﻿using SlackAPI.Attributes;
+﻿using System.Collections.Generic;
+using SlackAPI.Attributes;
 
 namespace SlackAPI.Models.RPCMessages
 {
     [RequestPath("users.counts")]
     public class UserCountsResponse : Response
     {
-        public ChannelCounts[] channels { get; set; }
-        public ChannelCounts[] groups { get; set; }
-        public DirectMessageNewCount[] ims { get; set; }
+        public List<ChannelCounts> channels {get; set;} = new List<ChannelCounts>();
+        public List<ChannelCounts> groups {get; set;} = new List<ChannelCounts>();
+        public List<DirectMessageNewCount> ims {get; set;} = new List<DirectMessageNewCount>();
     }
 }

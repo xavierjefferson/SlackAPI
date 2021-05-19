@@ -1,4 +1,5 @@
-﻿using SlackAPI.Attributes;
+﻿using System.Collections.Generic;
+using SlackAPI.Attributes;
 
 namespace SlackAPI.Models.RPCMessages
 {
@@ -13,9 +14,9 @@ namespace SlackAPI.Models.RPCMessages
         public string sso_type { get; set; }
         public string team_id { get; set; }
         public string url { get; set; }
-        public string[] email_domains { get; set; }
+        public List<string> email_domains {get; set;} = new List<string>();
         public bool sso { get; set; }
-        public SSOProvider[] sso_provider { get; set; }
+        public List<SSOProvider> sso_provider {get; set;} = new List<SSOProvider>();
 
         public static implicit operator Team(FindTeamResponse resp)
         {

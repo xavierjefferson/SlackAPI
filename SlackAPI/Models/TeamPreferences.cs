@@ -1,4 +1,6 @@
-﻿namespace SlackAPI.Models
+﻿using System.Collections.Generic;
+
+namespace SlackAPI.Models
 {
     public class TeamPreferences
     {
@@ -11,7 +13,7 @@
 
         public bool? stats_only_admins;
 
-        public string[] default_channels { get; set; }
+        public List<string> default_channels {get; set;} = new List<string>();
         public AuthMode auth_mode { get; set; }
         public bool display_real_names { get; set; }
         public bool gateway_allow_irc_plain { get; set; }

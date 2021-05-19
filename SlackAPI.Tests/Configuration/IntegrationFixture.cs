@@ -18,8 +18,8 @@ namespace SlackAPI.Tests.Configuration
 
         private readonly Lazy<SlackSocketClient> userClient;
         private readonly Lazy<SlackSocketClient> botClient;
-        private readonly Lazy<SlackTaskClient> userClientAsync;
-        private readonly Lazy<SlackTaskClient> botClientAsync;
+        private readonly Lazy<SlackClient> userClientAsync;
+        private readonly Lazy<SlackClient> botClientAsync;
 
         private readonly Policy connectRetryPolicy;
 
@@ -34,8 +34,8 @@ namespace SlackAPI.Tests.Configuration
 
             this.userClient = new Lazy<SlackSocketClient>(() => connectRetryPolicy.Execute(() => this.CreateClient(this.Config.UserAuthToken)));
             this.botClient = new Lazy<SlackSocketClient>(() => connectRetryPolicy.Execute(() => this.CreateClient(this.Config.BotAuthToken)));
-            this.userClientAsync = new Lazy<SlackTaskClient>(() => new SlackTaskClient(this.Config.UserAuthToken));
-            this.botClientAsync = new Lazy<SlackTaskClient>(() => new SlackTaskClient(this.Config.BotAuthToken));
+            this.userClientAsync = new Lazy<SlackClient>(() => new SlackClient(this.Config.UserAuthToken));
+            this.botClientAsync = new Lazy<SlackClient>(() => new SlackClient(this.Config.BotAuthToken));
         }
 
         public SlackConfig Config { get; }
@@ -70,9 +70,9 @@ namespace SlackAPI.Tests.Configuration
             return this.connectRetryPolicy.Execute(() => this.CreateClient(this.Config.BotAuthToken, proxySettings));
         }
 
-        public SlackTaskClient UserClientAsync => userClientAsync.Value;
+        public SlackClient UserClientAsync => userClientAsync.Value;
 
-        public SlackTaskClient BotClientAsync => botClientAsync.Value;
+        public SlackClient BotClientAsync => botClientAsync.Value;
 
         public void Dispose()
         {

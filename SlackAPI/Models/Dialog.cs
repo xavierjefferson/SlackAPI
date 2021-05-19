@@ -1,4 +1,6 @@
-﻿namespace SlackAPI.Models
+﻿using System.Collections.Generic;
+
+namespace SlackAPI.Models
 {
     //see https://api.slack.com/dialogs
 
@@ -9,7 +11,7 @@
         public string submit_label { get; set; }
         public bool? notify_on_cancel { get; set; }
         public string state { get; set; }
-        public Element[] elements { get; set; }
+        public List<Element> elements {get; set;} = new List<Element>();
 
         public abstract class Element
         {
@@ -41,9 +43,9 @@
         {
             public string type { get; } = "select";
             public string data_source { get; set; }
-            public Option[] options { get; set; }
-            public OptionGroup[] option_groups { get; set; }
-            public Option[] selected_options { get; set; }
+            public List<Option> options {get; set;} = new List<Option>();
+            public List<OptionGroup> option_groups {get; set;} = new List<OptionGroup>();
+            public List<Option> selected_options {get; set;} = new List<Option>();
             public int? min_query_length { get; set; }
         }
 
@@ -56,7 +58,7 @@
         public class OptionGroup
         {
             public string label { get; set; }
-            public Option[] options { get; set; }
+            public List<Option> options {get; set;} = new List<Option>();
         }
 
         public static class DataSourceTypes

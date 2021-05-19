@@ -1,4 +1,6 @@
-﻿namespace SlackAPI.Models.RPCMessages
+﻿using System.Collections.Generic;
+
+namespace SlackAPI.Models.RPCMessages
 {
     public class SearchResponseFilesContainer
     {
@@ -9,6 +11,6 @@
         public int total { get; set; }
 
         public PaginationInformation paging { get; set; }
-        public File[] matches { get; set; }
+        public List<File> matches {get; set;} = new List<File>();
     }
 }

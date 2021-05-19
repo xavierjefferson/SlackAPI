@@ -1,10 +1,11 @@
-﻿using SlackAPI.Attributes;
+﻿using System.Collections.Generic;
+using SlackAPI.Attributes;
 
 namespace SlackAPI.Models.RPCMessages
 {
     [RequestPath("im.list")]
     public class DirectMessageConversationListResponse : Response
     {
-        public DirectMessageConversation[] ims { get; set; }
+        public List<DirectMessageConversation> ims {get; set;} = new List<DirectMessageConversation>();
     }
 }

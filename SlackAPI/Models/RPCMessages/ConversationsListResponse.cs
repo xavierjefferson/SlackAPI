@@ -1,10 +1,11 @@
-﻿using SlackAPI.Attributes;
+﻿using System.Collections.Generic;
+using SlackAPI.Attributes;
 
 namespace SlackAPI.Models.RPCMessages
 {
     [RequestPath("conversations.list")]
     public class ConversationsListResponse : Response
     {
-        public Channel[] channels { get; set; }
+        public List<Channel> channels {get; set;} = new List<Channel>();
     }
 }

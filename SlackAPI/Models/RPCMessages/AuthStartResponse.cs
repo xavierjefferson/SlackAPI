@@ -1,4 +1,5 @@
-﻿using SlackAPI.Attributes;
+﻿using System.Collections.Generic;
+using SlackAPI.Attributes;
 
 namespace SlackAPI.Models.RPCMessages
 {
@@ -7,7 +8,7 @@ namespace SlackAPI.Models.RPCMessages
     {
         public string email { get; set; }
         public string domain { get; set; }
-        public UserTeamCombo[] users { get; set; }
+        public List<UserTeamCombo> users {get; set;} = new List<UserTeamCombo>();
 
         /// <summary>
         ///     Path to create a new team?

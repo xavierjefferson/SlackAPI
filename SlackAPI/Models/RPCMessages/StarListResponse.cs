@@ -1,11 +1,12 @@
-﻿using SlackAPI.Attributes;
+﻿using System.Collections.Generic;
+using SlackAPI.Attributes;
 
 namespace SlackAPI.Models.RPCMessages
 {
     [RequestPath("stars.list")]
     public class StarListResponse : Response
     {
-        public Star[] items { get; set; }
+        public List<Star> items {get; set;} = new List<Star>();
         public PaginationInformation paging { get; set; }
     }
 }

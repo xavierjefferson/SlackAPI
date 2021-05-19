@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace SlackAPI.Models
 {
@@ -7,11 +8,11 @@ namespace SlackAPI.Models
         /// <summary>
         ///     Supported domains emails can be registered from.
         /// </summary>
-        public string[] email_domains { get; set; }
+        public List<string> email_domains {get; set;} = new List<string>();
 
         public bool over_storage_limit { get; set; }
         public bool sso { get; set; }
-        public SSOProvider[] sso_provider { get; set; }
+        public List<SSOProvider> sso_provider {get; set;} = new List<SSOProvider>();
         public string domain { get; set; }
 
         /// <summary>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace SlackAPI.Models
 {
@@ -8,7 +9,7 @@ namespace SlackAPI.Models
     /// </summary>
     public class File
     {
-        public string[] channels { get; set; }
+        public List<string> channels {get; set;} = new List<string>();
         public int comments_count { get; set; }
         public DateTime created { get; set; }
         public bool display_as_bot { get; set; }
@@ -16,9 +17,9 @@ namespace SlackAPI.Models
         public bool editable { get; set; }
         public string external_type { get; set; }
         public string filetype { get; set; }
-        public string[] groups { get; set; }
+        public List<string> groups {get; set;} = new List<string>();
         public string id { get; set; }
-        public string[] ims { get; set; }
+        public List<string> ims {get; set;} = new List<string>();
         public FileComment initial_comment { get; set; }
         public bool is_external { get; set; }
 
@@ -35,13 +36,13 @@ namespace SlackAPI.Models
 
         public string permalink { get; set; }
         public string permalink_public { get; set; }
-        public string[] pinned_to { get; set; }
+        public List<string> pinned_to {get; set;} = new List<string>();
         public string pretty_type { get; set; }
         public string preview { get; set; }
         public string preview_highlight { get; set; }
         public bool public_url_shared { get; set; }
 
-        public Reaction[] reactions { get; set; }
+        public List<Reaction> reactions {get; set;} = new List<Reaction>();
 
         /// <summary>
         ///     File size in bytes

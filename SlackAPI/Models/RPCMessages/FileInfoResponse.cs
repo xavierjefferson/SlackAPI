@@ -1,4 +1,5 @@
-﻿using SlackAPI.Attributes;
+﻿using System.Collections.Generic;
+using SlackAPI.Attributes;
 
 namespace SlackAPI.Models.RPCMessages
 {
@@ -6,7 +7,7 @@ namespace SlackAPI.Models.RPCMessages
     public class FileInfoResponse : Response
     {
         public File file { get; set; }
-        public FileComment[] comments { get; set; }
+        public List<FileComment> comments {get; set;} = new List<FileComment>();
         public PaginationInformation paging { get; set; }
     }
 }
